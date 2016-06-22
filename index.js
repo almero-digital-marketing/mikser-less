@@ -16,6 +16,9 @@ module.exports = function (mikser) {
 	let cssPatternt = '**/*.css';
 	let lessFolder = path.join(mikser.config.runtimeFolder, 'less');
 
+	if (mikser.compile) mikser.compile.push('less');
+	else mikser.compile = ['less'];
+
 	if (cluster.isMaster) {
 		mikser.on('mikser.server.listen', (app) => {
 			var sourceMap = {sourceMapFileInline: true};
