@@ -18,17 +18,25 @@ module.exports = function (mikser) {
 
 	if (cluster.isMaster) {
 		mikser.on('mikser.server.listen', (app) => {
+			var sourceMap = {sourceMapFileInline: true};
+			if (mikser.config.less && mikser.config.less.sourceMap == false) {
+				sourceMap = undefined;
+			}
 			for(let replica of mikser.config.shared) {
 				app.use('/' + replica, lessMiddleware(mikser.config.filesFolder, {
-					debug: mikser.options.debug,
-					dest: path.join(lessFolder, replica)
+					dest: path.join(lessFolder, replica),
+					render: {
+						sourceMap: sourceMap
+					}
 				}));
 			}
 
 			if (fs.existsSync(mikser.config.replicateFolder)) {
 				app.use(lessMiddleware(mikser.config.replicateFolder, {
-					debug: mikser.options.debug,
-					dest: lessFolder
+					dest: lessFolder,
+					render: {
+						sourceMap: sourceMap
+					}
 				}));
 			}
 
@@ -37,7 +45,7 @@ module.exports = function (mikser) {
 
 		return {
 			compile: function(file) {
-				if (file && minimatch(file, lessPatternt)) {
+				if (mikser.config.browser && file && minimatch(file, lessPatternt)) {
 					glob(cssPatternt, { cwd: lessFolder }).then((files) => {
 						return Promise.map(files, (file) => {
 							mikser.emit('mikser.watcher.outputAction', 'compile', file);
