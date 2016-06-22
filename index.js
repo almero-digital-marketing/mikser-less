@@ -35,15 +35,19 @@ module.exports = function (mikser) {
 			app.use(express.static(lessFolder));
 		});
 
-		mikser.on('mikser.watcher.fileAction', (event, file) => {
-			if (minimatch(file, lessPatternt)) {
-				glob(cssPatternt, { cwd: lessFolder }).then((files) => {
-					return Promise.map(files, (file) => {
-						mikser.emit('mikser.watcher.outputAction', event, file);
+		return {
+			compile: function(file) {
+				if (file && minimatch(file, lessPatternt)) {
+					glob(cssPatternt, { cwd: lessFolder }).then((files) => {
+						return Promise.map(files, (file) => {
+							mikser.emit('mikser.watcher.outputAction', 'compile', file);
+						});
 					});
-				});
+					return Promise.resolve(true);
+				}
+				return Promise.resolve(false);
 			}
-		});
+		}
 	}
 
 }
