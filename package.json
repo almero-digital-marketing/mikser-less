@@ -1,6 +1,6 @@
 {
   "name": "mikser-less",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "description": "Real-time Less develoment middleware for Mikser",
   "main": "index.js",
   "keywords": [
@@ -10,13 +10,13 @@
   ],
   "dependencies": {
     "bluebird": "^3.4.0",
-    "fs-extra-promise": "^0.3.1",
-    "lodash": "^4.13.1",
     "express": "^4.14.0",
+    "fs-extra-promise": "^0.3.1",
     "glob": "^7.0.5",
     "glob-promise": "^1.0.6",
-    "minimatch": "^3.0.2",
-    "less-middleware": "^2.1.0"
+    "less": "^2.7.1",
+    "less-middleware": "^2.1.0",
+    "minimatch": "^3.0.2"
   },
   "author": "Almero Digital Marketing (http://almero.com)",
   "repository": {
