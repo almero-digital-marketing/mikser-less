@@ -9,21 +9,13 @@ var minimatch = require("minimatch");
 var glob = require('glob-promise');
 var express = require('express');
 var less = require('less');
+var extend = require('node.extend');
 
 module.exports = function (mikser, context) {
 	let debug = mikser.debug('less');
 	let lessPattern = '**/*.less';
 	let cssPattern = '**/*.css';
 	let lessFolder = path.join(mikser.config.runtimeFolder, 'less');
-
-	function isNewer(source, destination) {
-		let lessOutput = path.join(lessFolder, destination.replace(mikser.options.workingFolder,'').replace('.css','.json'));
-		if (fs.existsSync(lessOutput)) {
-			let output = fs.readJsonSync(lessOutput);
-			return mikser.utils.isNewer(source, destination) || mikser.utils.isNewer(output.imports, destination);
-		}
-		return mikser.utils.isNewer(source, destination);
-	}
 
 	if (context) {
 		context.less = function(source, destination, options) {
@@ -77,6 +69,16 @@ module.exports = function (mikser, context) {
 		else mikser.config.compile = ['less'];
 
 		if (cluster.isMaster) {
+
+			function isNewer(source, destination) {
+				let lessOutput = path.join(lessFolder, destination.replace(mikser.options.workingFolder,'').replace('.css','.json'));
+				if (fs.existsSync(lessOutput)) {
+					let lessInfo = fs.readJsonSync(lessOutput);
+					return mikser.utils.isNewer(source, destination) || mikser.utils.isNewer(lessInfo.imports, destination);
+				}
+				return true;
+			}
+
 			mikser.on('mikser.server.listen', (app) => {
 				var sourceMap = {sourceMapFileInline: true};
 				if (mikser.config.less && mikser.config.less.sourceMap == false) {
@@ -111,11 +113,11 @@ module.exports = function (mikser, context) {
 								let recompile = [];
 								return Promise.map(outputFiles, (outputFile) => {
 									let lessOutput = path.join(lessFolder, outputFile);
-									return fs.readJsonAsync(lessOutput).then((output) => {
-										if (output.info.source == file || output.imports.indexOf(file) != -1) {
-											recompile.push(output.info);
+									return fs.readJsonAsync(lessOutput).then((lessInfo) => {
+										if (lessInfo.source == file || lessInfo.imports.indexOf(file) != -1) {
+											recompile.push(lessInfo);
 											//console.log(output.info.destination);
-											mikser.emit('mikser.watcher.outputAction', 'compile', output.info.destination);
+											mikser.emit('mikser.watcher.outputAction', 'compile', lessInfo.destination);
 										}
 									});
 								}).delay(3000).then(() => {
@@ -139,17 +141,22 @@ module.exports = function (mikser, context) {
 				},
 				process: function(lessInfo) {
 					if (isNewer(lessInfo.source, lessInfo.destination)) {
+						let capturedOptions = extend(true, {}, lessInfo.options);
 						return fs.readFileAsync(lessInfo.source, { encoding: 'utf8' })
 							.then((input) => {
 								return less.render(input, lessInfo.options);
 							})
 							.then((output) => {
 								debug('Processed:', lessInfo.source);
-								output.info = lessInfo;
 								let lessOutput = path.join(lessFolder, lessInfo.destination.replace(mikser.options.workingFolder,'').replace('.css','.json'));
 								return Promise.join(
 									fs.outputFileAsync(lessInfo.destination, output.css),
-									fs.outputJson(lessOutput, output)
+									fs.outputJson(lessOutput, {
+										source: lessInfo.source,
+										destination: lessInfo.destination,
+										imports: output.imports,
+										options: capturedOptions
+									})
 								);
 							});
 					}
