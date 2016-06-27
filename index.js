@@ -73,7 +73,12 @@ module.exports = function (mikser, context) {
 			function isNewer(source, destination) {
 				let lessOutput = path.join(lessFolder, destination.replace(mikser.options.workingFolder,'').replace('.css','.json'));
 				if (fs.existsSync(lessOutput)) {
-					let lessInfo = fs.readJsonSync(lessOutput);
+					try {
+						let lessInfo = fs.readJsonSync(lessOutput);
+					} catch (err) {
+						debug('Erorr processing', lessOutput, err);
+						return true;
+					}
 					return mikser.utils.isNewer(source, destination) || mikser.utils.isNewer(lessInfo.imports, destination);
 				}
 				return true;
