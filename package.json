@@ -1,6 +1,6 @@
 {
   "name": "mikser-less",
-  "version": "1.5.2",
+  "version": "1.5.5",
   "description": "Real-time Less develoment middleware for Mikser",
   "main": "index.js",
   "keywords": [
@@ -15,7 +15,6 @@
     "glob": "^7.0.5",
     "glob-promise": "^1.0.6",
     "less": "^2.7.1",
-    "less-middleware": "^2.1.0",
     "minimatch": "^3.0.2",
     "node.extend": "^1.1.5"
   },

@@ -1,7 +1,6 @@
 'use strict'
 
 var Promise = require('bluebird');
-var lessMiddleware = require('less-middleware');
 var fs = require("fs-extra-promise");
 var cluster = require('cluster');
 var path = require('path');
@@ -30,7 +29,8 @@ module.exports = function (mikser, context) {
 			if (!options) {
 				lessInfo.options = {
 					fileName: lessInfo.source,
-					paths: [path.dirname(lessInfo.source)]
+					paths: [path.dirname(lessInfo.source)],
+					sourceMap: {sourceMapFileInline: true}
 				}
 			}
 			if (destination) {
@@ -85,32 +85,6 @@ module.exports = function (mikser, context) {
 				return true;
 			}
 
-			mikser.on('mikser.server.listen', (app) => {
-				var sourceMap = {sourceMapFileInline: true};
-				if (mikser.config.less && mikser.config.less.sourceMap == false) {
-					sourceMap = undefined;
-				}
-				for(let replica of mikser.config.shared) {
-					app.use('/' + replica, lessMiddleware(mikser.config.filesFolder, {
-						dest: path.join(lessFolder, replica),
-						render: {
-							sourceMap: sourceMap
-						}
-					}));
-				}
-
-				if (fs.existsSync(mikser.config.replicateFolder)) {
-					app.use(lessMiddleware(mikser.config.replicateFolder, {
-						dest: lessFolder,
-						render: {
-							sourceMap: sourceMap
-						}
-					}));
-				}
-
-				app.use(express.static(lessFolder));
-			});
-
 			return {
 				compile: function(file) {
 					if (mikser.config.browser && file && minimatch(file, lessPattern)) {
@@ -126,20 +100,12 @@ module.exports = function (mikser, context) {
 											mikser.emit('mikser.watcher.outputAction', 'compile', lessInfo.destination);
 										}
 									});
-								}).delay(3000).then(() => {
+								}).then(() => {
 									console.log('Less compile:', recompile.length);
-									return mikser.watcher.stop('reload').then(() => {
-										return Promise.map(recompile, mikser.plugins.less.process);
-									});
-								}).then(mikser.watcher.start).then(() => {
+									return Promise.map(recompile, mikser.plugins.less.process);
+								}).then(() => {
 									return Promise.resolve(recompile.length > 0);	
 								});
-							} else {
-								return glob(cssPattern, { cwd: lessFolder }).then((files) => {
-									return Promise.map(files, (cssFile) => {
-										mikser.emit('mikser.watcher.outputAction', 'compile', cssFile);
-									});
-								});								
 							}
 						});
 					}
