@@ -1,11 +1,11 @@
 {
   "name": "mikser-less",
-  "version": "1.5.5",
-  "description": "Real-time Less develoment middleware for Mikser",
+  "version": "1.5.7",
+  "description": "Real-time Less plugin for Mikser.",
   "main": "index.js",
   "keywords": [
     "less",
-    "middleware",
+    "plugin",
     "mikser"
   ],
   "dependencies": {
@@ -13,6 +13,7 @@
     "express": "^4.14.0",
     "fs-extra-promise": "^0.3.1",
     "glob": "^7.0.5",
+    "lodash": "^4.13.1",
     "glob-promise": "^1.0.6",
     "less": "^2.7.1",
     "minimatch": "^3.0.2",

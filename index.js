@@ -9,6 +9,7 @@ var glob = require('glob-promise');
 var express = require('express');
 var less = require('less');
 var extend = require('node.extend');
+var _ = require('lodash');
 
 module.exports = function (mikser, context) {
 	let debug = mikser.debug('less');
@@ -18,18 +19,24 @@ module.exports = function (mikser, context) {
 
 	if (context) {
 		context.less = function(source, destination, options) {
+			let sourceFile = mikser.utils.findSource(source);
+			let defaultOptions = {
+				fileName: sourceFile,
+				paths: [path.dirname(sourceFile),path.join(mikser.options.workingFolder, 'node_modules')],
+				sourceMap: {sourceMapFileInline: true}
+			}
 			if (destination && typeof destination != 'string') {
 				options = destination;
 				destination = undefined;
 			}
 			let lessInfo = {
-				source: mikser.utils.findSource(source),
-				options: options
+				source: sourceFile,
+				options: _.defaults(options, defaultOptions)
 			}
 			if (!options) {
 				lessInfo.options = {
-					fileName: lessInfo.source,
-					paths: [path.dirname(lessInfo.source)],
+					fileName: sourceFile,
+					paths: [path.dirname(lessInfo.source),path.join(mikser.options.workingFolder, 'node_modules')],
 					sourceMap: {sourceMapFileInline: true}
 				}
 			}
@@ -45,7 +52,7 @@ module.exports = function (mikser, context) {
 					lessInfo.destination = destination;
 				}
 			} else {
-				lessInfo.destination = mikser.utils.predictDestination(source).replace('.less', '.css');
+				lessInfo.destination = mikser.utils.predictDestination(sourceFile).replace('.less', '.css');
 				lessInfo.destination = mikser.utils.resolveDestination(lessInfo.destination, context.entity.destination);
 			}
 
@@ -61,7 +68,7 @@ module.exports = function (mikser, context) {
 					mikser.diagnostics.log(context, 'error', 'Error processing:', lessInfo.destination, err);
 				});
 			});
-			return mikser.manager.getUrl(lessInfo.destination);
+			return mikser.utils.getUrl(lessInfo.destination);
 		}
 	} else {
 
