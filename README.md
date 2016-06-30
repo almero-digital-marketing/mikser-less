@@ -1,2 +1,2 @@
 # mikser-less
-Real-time Less develoment middleware for Mikser.
+Real-time Less plugin for Mikser.
